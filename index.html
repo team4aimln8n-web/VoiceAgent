@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Voice Agent Frontend</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+
+    .container {
+      background: white;
+      border-radius: 24px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      padding: 40px;
+      max-width: 500px;
+      width: 100%;
+    }
+
+    .header {
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .header h2 {
+      font-size: 28px;
+      color: #1a202c;
+      margin-bottom: 8px;
+      font-weight: 700;
+    }
+
+    .header p {
+      color: #718096;
+      font-size: 14px;
+    }
+
+    .waveform-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      height: 60px;
+      margin-bottom: 28px;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      border-radius: 12px;
+      padding: 16px;
+    }
+
+    .waveform-bar {
+      width: 3px;
+      background: linear-gradient(180deg, #667eea 0%, #764ba2 100%);
+      border-radius: 2px;
+      animation: wave 0.6s ease-in-out infinite;
+    }
+
+    .waveform-bar:nth-child(1) { animation-delay: 0s; height: 20%; }
+    .waveform-bar:nth-child(2) { animation-delay: 0.1s; height: 40%; }
+    .waveform-bar:nth-child(3) { animation-delay: 0.2s; height: 60%; }
+    .waveform-bar:nth-child(4) { animation-delay: 0.3s; height: 80%; }
+    .waveform-bar:nth-child(5) { animation-delay: 0.4s; height: 100%; }
+    .waveform-bar:nth-child(6) { animation-delay: 0.5s; height: 80%; }
+    .waveform-bar:nth-child(7) { animation-delay: 0.6s; height: 60%; }
+    .waveform-bar:nth-child(8) { animation-delay: 0.7s; height: 40%; }
+    .waveform-bar:nth-child(9) { animation-delay: 0.8s; height: 20%; }
+
+    .waveform-container.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    @keyframes wave {
+      0%, 100% {
+        height: 20%;
+        opacity: 0.5;
+      }
+      50% {
+        height: 100%;
+        opacity: 1;
+      }
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 24px;
+    }
+
+    button {
+      flex: 1;
+      padding: 14px 20px;
+      border: none;
+      border-radius: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    #startBtn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    }
+
+    #startBtn:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+    }
+
+    #stopBtn {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(245, 87, 108, 0.4);
+    }
+
+    button:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .waiting-container {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      height: 60px;
+      margin-bottom: 28px;
+    }
+
+    .waiting-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      animation: bounce 1.4s infinite ease-in-out both;
+    }
+
+    .waiting-dot:nth-child(1) {
+      animation-delay: -0.32s;
+    }
+
+    .waiting-dot:nth-child(2) {
+      animation-delay: -0.16s;
+    }
+
+    @keyframes bounce {
+      0%, 80%, 100% {
+        transform: scale(0);
+        opacity: 0.5;
+      }
+      40% {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+  </style>
+</head>
+
+<body>
+<div class="container">
+
+  <div class="header">
+    <h2>🎤 Voice Agent</h2>
+    <p>Powered by n8n + OpenAI</p>
+  </div>
+
+  <div class="waveform-container hidden" id="waveformContainer">
+    <div class="waveform-bar"></div>
+    <div class="waveform-bar"></div>
+    <div class="waveform-bar"></div>
+    <div class="waveform-bar"></div>
+    <div class="waveform-bar"></div>
+    <div class="waveform-bar"></div>
+    <div class="waveform-bar"></div>
+    <div class="waveform-bar"></div>
+    <div class="waveform-bar"></div>
+  </div>
+
+  <div class="waiting-container" id="waitingContainer">
+    <div class="waiting-dot"></div>
+    <div class="waiting-dot"></div>
+    <div class="waiting-dot"></div>
+  </div>
+
+  <div class="controls">
+    <button id="startBtn">Start Recording</button>
+    <button id="stopBtn" disabled>Stop Recording</button>
+  </div>
+
+</div>
+
+<script>
+// Webhook URL
+const webhookUrl = "https://team4aiml.app.n8n.cloud/webhook/72226f51-fd8b-41ad-9b42-bbc488e657c2";
+
+// Session ID
+const sessionId = "sess_" + Math.random().toString(36).substring(2, 12);
+
+// UI toggles
+function showWaveform() {
+  document.getElementById("waveformContainer").classList.remove("hidden");
+  document.getElementById("waitingContainer").style.display = "none";
+}
+
+function hideWaveform() {
+  document.getElementById("waveformContainer").classList.add("hidden");
+}
+
+function showWaiting() {
+  document.getElementById("waitingContainer").style.display = "flex";
+  document.getElementById("waveformContainer").classList.add("hidden");
+}
+
+function hideWaiting() {
+  document.getElementById("waitingContainer").style.display = "none";
+}
+
+// 🔊 NEW: "Processing your request..." audio with 3-second delay
+let pleaseWaitTimeout = null;
+
+function schedulePleaseWait() {
+  pleaseWaitTimeout = setTimeout(() => {
+    const audio = new Audio('processing-your-request.mp3');
+    audio.play().catch(err => console.warn("Autoplay blocked:", err));
+  }, 3000); // 3 seconds
+}
+
+function cancelPleaseWait() {
+  if (pleaseWaitTimeout) {
+    clearTimeout(pleaseWaitTimeout);
+    pleaseWaitTimeout = null;
+  }
+}
+
+// WAV helper functions
+function audioBufferToWav(buffer, opt) {
+  opt = opt || {}
+
+  var numChannels = buffer.numberOfChannels
+  var sampleRate = buffer.sampleRate
+  var format = opt.float32 ? 3 : 1
+  var bitDepth = format === 3 ? 32 : 16
+
+  var result
+  if (numChannels === 2) {
+      result = interleave(buffer.getChannelData(0), buffer.getChannelData(1))
+  } else {
+      result = buffer.getChannelData(0)
+  }
+
+  return encodeWAV(result, format, sampleRate, numChannels, bitDepth)
+}
+
+function encodeWAV(samples, format, sampleRate, numChannels, bitDepth) {
+  var bytesPerSample = bitDepth / 8
+  var blockAlign = numChannels * bytesPerSample
+
+  var buffer = new ArrayBuffer(44 + samples.length * bytesPerSample)
+  var view = new DataView(buffer)
+
+  writeString(view, 0, 'RIFF')
+  view.setUint32(4, 36 + samples.length * bytesPerSample, true)
+  writeString(view, 8, 'WAVE')
+  writeString(view, 12, 'fmt ')
+  view.setUint32(16, 16, true)
+  view.setUint16(20, format, true)
+  view.setUint16(22, numChannels, true)
+  view.setUint32(24, sampleRate, true)
+  view.setUint32(28, sampleRate * blockAlign, true)
+  view.setUint16(32, blockAlign, true)
+  view.setUint16(34, bitDepth, true)
+  writeString(view, 36, 'data')
+  view.setUint32(40, samples.length * bytesPerSample, true)
+
+  if (format === 1) {
+      floatTo16BitPCM(view, 44, samples)
+  } else {
+      writeFloat32(view, 44, samples)
+  }
+
+  return buffer
+}
+
+function writeString(view, offset, string) {
+  for (var i = 0; i < string.length; i++) {
+      view.setUint8(offset + i, string.charCodeAt(i))
+  }
+}
+
+function floatTo16BitPCM(output, offset, input) {
+  for (var i = 0; i < input.length; i++, offset += 2) {
+      var s = Math.max(-1, Math.min(1, input[i]))
+      output.setInt16(offset, s < 0 ? s * 0x8000 : s * 0x7FFF, true)
+  }
+}
+
+function interleave(inputL, inputR) {
+  var length = inputL.length + inputR.length
+  var result = new Float32Array(length)
+
+  var index = 0
+  var inputIndex = 0
+
+  while (index < length) {
+      result[index++] = inputL[inputIndex]
+      result[index++] = inputR[inputIndex]
+      inputIndex++
+  }
+
+  return result
+}
+
+function writeFloat32(output, offset, input) {
+  for (var i = 0; i < input.length; i++, offset += 4) {
+      output.setFloat32(offset, input[i], true)
+  }
+}
+
+let mediaRecorder;
+let audioChunks = [];
+
+document.getElementById("startBtn").onclick = async () => {
+    audioChunks = [];
+    showWaveform();
+
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    mediaRecorder = new MediaRecorder(stream);
+
+    mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+
+    mediaRecorder.start();
+
+    document.getElementById("startBtn").disabled = true;
+    document.getElementById("stopBtn").disabled = false;
+};
+
+document.getElementById("stopBtn").onclick = async () => {
+    hideWaveform();
+    showWaiting();
+
+    // 🔊 Schedule "please wait" audio after 3 seconds
+    schedulePleaseWait();
+
+    mediaRecorder.stop();
+
+    document.getElementById("stopBtn").disabled = true;
+    document.getElementById("startBtn").disabled = false;
+
+    mediaRecorder.onstop = async () => {
+        const blob = new Blob(audioChunks, { type: "audio/webm" });
+
+        const arrayBuffer = await blob.arrayBuffer();
+        const audioCtx = new AudioContext();
+        const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+        const wav = audioBufferToWav(audioBuffer);
+
+        const wavBlob = new Blob([wav], { type: "audio/wav" });
+
+        uploadToWebhook(wavBlob);
+    };
+};
+
+async function uploadToWebhook(wavBlob) {
+    const formData = new FormData();
+    formData.append("file", wavBlob, "audio.wav");
+    formData.append("sessionId", sessionId);
+    formData.append("metadata", JSON.stringify({
+        clientTimestamp: Date.now(),
+        filename: "audio.wav"
+    }));
+
+    try {
+        const response = await fetch(webhookUrl, {
+            method: "POST",
+            body: formData
+        });
+
+        // Cancel the "please wait" audio since we got a response
+        cancelPleaseWait();
+
+        const audioBlob = await response.blob();
+        const audioUrl = URL.createObjectURL(audioBlob);
+        const audioPlayer = new Audio(audioUrl);
+
+        hideWaiting();
+        showWaveform();
+
+        audioPlayer.onended = () => {
+          hideWaveform();
+        };
+
+        audioPlayer.play().catch(() => { 
+          console.warn("Autoplay blocked");
+          hideWaveform();
+        });
+    } catch (err) {
+        cancelPleaseWait();
+        hideWaiting();
+        console.error(err);
+    }
+}
+
+</script>
+</body>
+</html>
