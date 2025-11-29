@@ -229,20 +229,41 @@ function hideWaiting() {
   document.getElementById("waitingContainer").style.display = "none";
 }
 
-// 🔊 NEW: "Processing your request..." audio with 3-second delay
+// 🔊 NEW: "Processing your request..." audio with 3-second delay + follow-up audio
 let pleaseWaitTimeout = null;
+let almostThereTimeout = null;
+let currentAudio = null;
 
 function schedulePleaseWait() {
+  // Schedule first audio after 3 seconds
   pleaseWaitTimeout = setTimeout(() => {
-    const audio = new Audio('processing-your-request.mp3');
-    audio.play().catch(err => console.warn("Autoplay blocked:", err));
-  }, 3000); // 3 seconds
+    currentAudio = new Audio('processing-your-request.mp3');
+    currentAudio.play().catch(err => console.warn("Autoplay blocked:", err));
+    
+    // Schedule second audio 4 seconds after first audio starts
+    almostThereTimeout = setTimeout(() => {
+      currentAudio = new Audio('almost-there.mp3');
+      currentAudio.play().catch(err => console.warn("Autoplay blocked:", err));
+    }, 4000); // 4 seconds after first audio
+  }, 3000); // 3 seconds initial delay
 }
 
 function cancelPleaseWait() {
+  // Cancel both scheduled timeouts
   if (pleaseWaitTimeout) {
     clearTimeout(pleaseWaitTimeout);
     pleaseWaitTimeout = null;
+  }
+  if (almostThereTimeout) {
+    clearTimeout(almostThereTimeout);
+    almostThereTimeout = null;
+  }
+  
+  // Stop any currently playing audio
+  if (currentAudio) {
+    currentAudio.pause();
+    currentAudio.currentTime = 0;
+    currentAudio = null;
   }
 }
 
